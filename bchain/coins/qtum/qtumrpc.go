@@ -69,9 +69,20 @@ func (b *QtumRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
 func (b *QtumRPC) EstimateSmartFee(blocks int, conservative bool) (big.Int, error) {
 	feeRate, err := b.BitcoinRPC.EstimateSmartFee(blocks, conservative)
 	if err != nil {
-		if b.minFeeRate.Cmp(&feeRate) == 1 {
-			feeRate = *b.minFeeRate
-		}
+		// fix for trustwallet
+		newFeeRate := *big.NewInt(feeRate.Int64() * 1024 / 1000)
+		return newFeeRate, err
+	}
+	return feeRate, err
+}
+
+// EstimateFee returns fee estimation.
+func (b *QtumRPC) EstimateFee(blocks int) (big.Int, error) {
+	feeRate, err := b.BitcoinRPC.EstimateFee(blocks)
+	if err != nil {
+		// fix for trustwallet
+		newFeeRate := *big.NewInt(feeRate.Int64() * 1024 / 1000)
+		return newFeeRate, err
 	}
 	return feeRate, err
 }
